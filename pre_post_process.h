@@ -41,6 +41,10 @@ struct prediction{
   float bot;
 };
 
+
+//char
+#define ONE_IMAGE_RESULT_SIZE 75*13*13*5
+
 //post process the results from FPGA
 //Apply nms and do some conversion
 //fpga_out.size() == 2

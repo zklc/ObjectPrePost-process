@@ -403,7 +403,7 @@ void post_process_float(const std::vector<std::vector<float>>& fpga_out,
       // float *input_data = (float*)malloc(sizeof(float) * 1 * 75 * side_w_ * side_h_);
       // dummy_out_char_to_float(input_data_raw, input_data,
       //                         1 * 75 * side_w_ * side_h_);
-      float *input_data = fpga_out.at(t).data();
+      const float *input_data = fpga_out.at(t).data();
       // int nw = side_w_*anchors_scale_[t];
       // int nh = side_w_*anchors_scale_[t]; // the source code error
       int nw = side_w_ * anchors_scale_[t];
