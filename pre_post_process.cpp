@@ -4,6 +4,8 @@
 #include <cassert>
 #include <cmath>
 //#include <cstdlib>
+#include <iostream>
+
 #include <cstring>
 #include "pre_post_process.h"
 
@@ -148,10 +150,14 @@ bool BoxSortDecendScore(const PredictionResult& box1,
 void ApplyNms(std::vector< PredictionResult >& boxes,
               std::vector<int>& idxes, float threshold) {
   std::map<int, int> idx_map;
+  //std::cout<<__FUNCTION__<<" "<<__LINE__<<std::endl;
+  //std::cout<<"boxes.size():"<<boxes.size()<<std::endl;
   for (int i = 0; i < boxes.size() - 1; ++i) {
     if (idx_map.find(i) != idx_map.end()) { //no iou > t now
       continue;
     }
+    //std::cout<<__FUNCTION__<<" "<<__LINE__<<std::endl;
+    //std::cout<<"i = "<<i<<std::endl;
     for (int j = i + 1; j < boxes.size(); ++j) {
       if (idx_map.find(j) != idx_map.end()) { // no iou > t now
         continue;
@@ -174,6 +180,7 @@ void ApplyNms(std::vector< PredictionResult >& boxes,
 
     }
   }
+  //std::cout<<__FUNCTION__<<" "<<__LINE__<<std::endl;
   for (int i = 0; i < boxes.size(); ++i) {
     if (idx_map.find(i) == idx_map.end()) {
       idxes.push_back(i);//no iou, real result
@@ -208,7 +215,7 @@ void post_process(const std::vector<std::vector<char>> &fpga_out,
   const float mask_[6] = {3, 4, 5, 0, 1, 2};
   const float nms_threshold_ = 0.45;
   //the paramter from yolov3_detection_output_layer<up>
-
+  //std::cout<<__FUNCTION__<<" "<<__LINE__<<std::endl;
   //if (Caffe::mode() == Caffe::CPU) {
   {
     int mask_offset = 0;
@@ -317,12 +324,14 @@ void post_process(const std::vector<std::vector<char>> &fpga_out,
 
     delete[] class_score;
   }
-
   std::sort(predicts_.begin(), predicts_.end(),
             BoxSortDecendScore);
+  //std::cout<<__FUNCTION__<<" "<<__LINE__<<std::endl;
+  //std::cout<<"predicts_.size():"<<predicts_.size()<<std::endl;
   std::vector<int> idxes;
   int num_kept = 0;
   if(predicts_.size() > 0){
+    //std::cout<<__FUNCTION__<<" "<<__LINE__<<std::endl;
     //LOG(INFO) << predicts.size();
     ApplyNms(predicts_, idxes, nms_threshold_);
     num_kept = idxes.size();
@@ -334,9 +343,10 @@ void post_process(const std::vector<std::vector<char>> &fpga_out,
   //put result into the output_preds
   if(num_kept == 0){
     output_preds.clear();//no result
-
+    //std::cout<<__FUNCTION__<<" "<<__LINE__<<std::endl;
 
   }else {
+    //std::cout<<__FUNCTION__<<" "<<__LINE__<<std::endl;
     for(int ii = 0; ii < num_kept; ii++){
       //skip image_id
       prediction tp;
@@ -353,7 +363,9 @@ void post_process(const std::vector<std::vector<char>> &fpga_out,
 
       output_preds.push_back(tp);
     }
-
+    //std::cout<<__FUNCTION__<<" "<<__LINE__<<std::endl;
+    //std::cout<<"output_preds.size():"<<output_preds.size()<<std::endl;
+    //std::cout<<"output_preds.at(154).right:"<<output_preds.at(154).right<<std::endl;
   }
 
 }//post_process
@@ -554,6 +566,8 @@ void post_process_float(const std::vector<std::vector<float>>& fpga_out,
     std::vector<unsigned char> in_img_0(in_img, in_img + (*in_img_size));
     std::vector<int> mean_0(mean, mean + channel);
     std::vector<char> out_img0;
+    //std::cout<<__FUNCTION__<<" "<<__LINE__<<std::endl;
+
     pre_process_image(in_img_0,
                       width,  height,
                       channel, //assert channel == 4
@@ -561,7 +575,8 @@ void post_process_float(const std::vector<std::vector<float>>& fpga_out,
                       mean_0,
                       out_img0);
     *out_img = (char*)malloc(out_img0.size());
-    std::memcpy(out_img, out_img0.data(), out_img0.size() * sizeof(int));
+    std::memcpy(*out_img, out_img0.data(), out_img0.size() );
+    //    std::cout<<__FUNCTION__<<" "<<__LINE__<<" out_img0.size():"<<out_img0.size()<<std::endl;
     *out_img_size = out_img0.size();
   }
 
@@ -585,6 +600,7 @@ void post_process_float(const std::vector<std::vector<float>>& fpga_out,
     std::vector<char> fpga_out_e0(fpga_out, fpga_out + 75*13*13);
     std::vector<char> fpga_out_e1(fpga_out + 75*13*13,
                                   fpga_out + 75*13*13 + 75*26*26);
+    //std::cout<<__FUNCTION__<<" "<<__LINE__<<std::endl;
 
     std::vector<std::vector<char>> fpga_out0{fpga_out_e0, fpga_out_e1};
 
@@ -592,8 +608,23 @@ void post_process_float(const std::vector<std::vector<float>>& fpga_out,
     post_process(fpga_out0,
                  preds0
                  );
-    *preds = (prediction*)malloc(sizeof(prediction) * preds0.size());
-    memcpy(preds, preds0.data(), sizeof(prediction)*preds0.size());
+    //    std::cout<<"preds0.at(0).right:"<<preds0.at(154).right<<std::endl;
+    //std::cout<<__FUNCTION__<<" "<<__LINE__<<std::endl;
+    //std::cout<<"preds0.size():"<<preds0.size()<<std::endl;
+    //printf("sizeof(prediction):%d\n", sizeof(prediction));
+    //printf("preds0.at(preds0.size()-1).right=%f\n",
+    //preds0.at(154).right);
+
+    *preds = (prediction*)malloc(sizeof(prediction) * preds0.size() );
+    //*preds = (prediction*)malloc(100);
+    //*preds = new prediction[100];
+    //assert(*preds != NULL);
+    //char *preds_data =  (char*)preds0.data();
+    //printf("preds0.at(preds0.size()-1).right=%f\n",
+    //preds0.at(0).right);
+    memcpy((char*)(*preds), preds0.data(), sizeof(prediction)*preds0.size());
+    //std::cout<<__FUNCTION__<<" "<<__LINE__<<std::endl;
+
     *preds_size = preds0.size();
 
 
