@@ -56,6 +56,23 @@ void post_process(const std::vector<std::vector<char>>& fpga_out,
                    );
 
 
+//for gaolaoban
+//post process the results from FPGA
+//Apply nms and do some conversion
+//fpga_out: 1 * 75 * 13 * 13 + 1 * 75 * 26 * 26
+//fpga_out.at(0).size == 1 * 75 * 13 * 13
+//fpga_out.at(1).size == 1 * 75 * 26 * 26
+//element of preds: if prediction.class_label == 0, then no object of this element
+void post_process(//const std::vector<std::vector<char>>& fpga_out,
+                  const char *fpga_out,
+                  const int *fpga_out_size,
+
+
+                  //std::vector<prediction>& preds
+                  prediction *preds,
+                  int *preds_size
+                  );
+
 
 
 
