@@ -68,7 +68,8 @@ void pre_process_image_for_cshapr(//const std::vector<unsigned char>& in_img,
                        const int *in_img_size,
                        const int width, const int height,
                        const int channel, //assert channel == 4
-                       const std::vector<int>& mean, //ABGR, assert size==4
+                       //                       const std::vector<int>& mean, //ABGR, assert size==4
+                       const int *mean, //size == channel
                        //std::vector<char>& out_img
 
                        //output
