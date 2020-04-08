@@ -31,6 +31,7 @@ void pre_process_image(const std::vector<unsigned char>& in_img,
 
 
 
+
 struct prediction{
   int class_label=0; // 0, no object. 1-->21 the 20 pascvol label
   //float class_score=0;
@@ -63,7 +64,7 @@ void post_process(const std::vector<std::vector<char>>& fpga_out,
 //fpga_out.at(0).size == 1 * 75 * 13 * 13
 //fpga_out.at(1).size == 1 * 75 * 26 * 26
 //element of preds: if prediction.class_label == 0, then no object of this element
-void post_process(//const std::vector<std::vector<char>>& fpga_out,
+void post_process_for_csharp(//const std::vector<std::vector<char>>& fpga_out,
                   const char *fpga_out,
                   const int *fpga_out_size,
 
