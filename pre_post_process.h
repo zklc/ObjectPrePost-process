@@ -57,6 +57,25 @@ void post_process(const std::vector<std::vector<char>>& fpga_out,
                    );
 
 
+
+//for gao laoban
+//please resize the image to the input size of FPGA before call this function
+//use for pre_process the image
+//img:H-->W-->C, ABGR planar
+//now, the mean's element always equals 128
+void pre_process_image_for_cshapr(//const std::vector<unsigned char>& in_img,
+                       const unsigned char *in_img,
+                       const int *in_img_size,
+                       const int width, const int height,
+                       const int channel, //assert channel == 4
+                       const std::vector<int>& mean, //ABGR, assert size==4
+                       //std::vector<char>& out_img
+
+                       //output
+                       char *out_img,//allocate by this function
+                       int *out_img_size,
+                                  );
+
 //for gaolaoban
 //post process the results from FPGA
 //Apply nms and do some conversion
@@ -70,7 +89,7 @@ void post_process_for_csharp(//const std::vector<std::vector<char>>& fpga_out,
 
 
                   //std::vector<prediction>& preds
-                  prediction *preds,
+                  prediction *preds,//allocate by this function
                   int *preds_size
                   );
 
