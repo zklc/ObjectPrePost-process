@@ -3,6 +3,8 @@
 #include <map>
 #include <cassert>
 #include <cmath>
+//#include <cstdlib>
+#include <cstring>
 #include "pre_post_process.h"
 
 namespace pre_post{
@@ -186,7 +188,7 @@ void ApplyNms(std::vector< PredictionResult >& boxes,
 //fpga_out.at(1).size == 1 * 75 * 26 * 26
 //element of preds: if prediction.class_label == 0, then no object of this element
 void post_process(const std::vector<std::vector<char>> &fpga_out,
-                  std::vector<prediction> output_preds
+                  std::vector<prediction> &output_preds
                   ){
 
   output_preds.clear();
@@ -529,6 +531,74 @@ void post_process_float(const std::vector<std::vector<float>>& fpga_out,
   }
 
 }//post_process
+
+
+  //for gao laoban
+  //please resize the image to the input size of FPGA before call this function
+  //use for pre_process the image
+  //img:H-->W-->C, ABGR planar
+  //now, the mean's element always equals 128
+  void pre_process_image_for_csharp(//const std::vector<unsigned char>& in_img,
+                                    const unsigned char *in_img,
+                                    const int *in_img_size,
+                                    const int width, const int height,
+                                    const int channel, //assert channel == 4
+                                    //                       const std::vector<int>& mean, //ABGR, assert size==4
+                                    const int *mean, //size == channel
+                                    //std::vector<char>& out_img
+
+                                    //output
+                                    char **out_img,//allocate by this function
+                                    int *out_img_size
+                                    ){
+    std::vector<unsigned char> in_img_0(in_img, in_img + (*in_img_size));
+    std::vector<int> mean_0(mean, mean + channel);
+    std::vector<char> out_img0;
+    pre_process_image(in_img_0,
+                      width,  height,
+                      channel, //assert channel == 4
+                      //const std::vector<int>& mean, //ABGR, assert size==4
+                      mean_0,
+                      out_img0);
+    *out_img = (char*)malloc(out_img0.size());
+    std::memcpy(out_img, out_img0.data(), out_img0.size() * sizeof(int));
+    *out_img_size = out_img0.size();
+  }
+
+  //for gaolaoban
+  //post process the results from FPGA
+  //Apply nms and do some conversion
+  //fpga_out: 1 * 75 * 13 * 13 + 1 * 75 * 26 * 26
+  //fpga_out.at(0).size == 1 * 75 * 13 * 13
+  //fpga_out.at(1).size == 1 * 75 * 26 * 26
+  //element of preds: if prediction.class_label == 0, then no object of this element
+  void post_process_for_csharp(//const std::vector<std::vector<char>>& fpga_out,
+                               const char *fpga_out,
+                               const int *fpga_out_size,
+
+
+                               //std::vector<prediction>& preds
+                               prediction **preds,//allocate by this function
+                               int *preds_size
+                               ){
+
+    std::vector<char> fpga_out_e0(fpga_out, fpga_out + 75*13*13);
+    std::vector<char> fpga_out_e1(fpga_out + 75*13*13,
+                                  fpga_out + 75*13*13 + 75*26*26);
+
+    std::vector<std::vector<char>> fpga_out0{fpga_out_e0, fpga_out_e1};
+
+    std::vector<prediction> preds0;
+    post_process(fpga_out0,
+                 preds0
+                 );
+    *preds = (prediction*)malloc(sizeof(prediction) * preds0.size());
+    memcpy(preds, preds0.data(), sizeof(prediction)*preds0.size());
+    *preds_size = preds0.size();
+
+
+
+  }
 
 
 }//namespace pre_post
