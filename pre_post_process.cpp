@@ -234,9 +234,11 @@ void post_process(const std::vector<std::vector<char>> &fpga_out,
       //in fact , do no need so much.
       //keep the same size only to simplify the code
       swap_data = swap_ = (float*)malloc(sizeof(float) * 1 * 75 * side_w_ * side_h_);
+      assert(swap_data != NULL);
       //      const Dtype* input_data = bottom[t]->cpu_data();
       const char *input_data_raw = fpga_out.at(t).data(); //from the fpga, so char
       float *input_data = (float*)malloc(sizeof(float) * 1 * 75 * side_w_ * side_h_);
+      assert(input_data != NULL);
       dummy_out_char_to_float(input_data_raw, input_data,
                               1 * 75 * side_w_ * side_h_);
       // int nw = side_w_*anchors_scale_[t];
@@ -412,6 +414,7 @@ void post_process_float(const std::vector<std::vector<float>>& fpga_out,
       //in fact , do no need so much.
       //keep the same size only to simplify the code
       swap_data = swap_ = (float*)malloc(sizeof(float) * 1 * 75 * side_w_ * side_h_);
+      assert(swap_data != NULL);
       //      const Dtype* input_data = bottom[t]->cpu_data();
       // const char *input_data_raw = fpga_out.at(t).data(); //from the fpga, so char
       // float *input_data = (float*)malloc(sizeof(float) * 1 * 75 * side_w_ * side_h_);
@@ -550,6 +553,12 @@ void post_process_float(const std::vector<std::vector<float>>& fpga_out,
   //use for pre_process the image
   //img:H-->W-->C, ABGR planar
   //now, the mean's element always equals 128
+  //---20200410 sunlaoban <down>
+  // in case of memory leak, the function should first check if(*out_img != NULL),
+  // then  free the previous memory.
+  // so the caller should first call with *out_img == NULL,
+  // next call with *out_img == previous_pointer_value
+  //---20200410 sunlaoban <up>
   void pre_process_image_for_csharp(//const std::vector<unsigned char>& in_img,
                                     const unsigned char *in_img,
                                     const int *in_img_size,
@@ -563,6 +572,10 @@ void post_process_float(const std::vector<std::vector<float>>& fpga_out,
                                     char **out_img,//allocate by this function
                                     int *out_img_size
                                     ){
+    //sun laoban <dowm>
+    free(*out_img);// if *out_img == NULL, this will not have any effect.
+    //sun laoban <up>
+
     std::vector<unsigned char> in_img_0(in_img, in_img + (*in_img_size));
     std::vector<int> mean_0(mean, mean + channel);
     std::vector<char> out_img0;
@@ -575,6 +588,7 @@ void post_process_float(const std::vector<std::vector<float>>& fpga_out,
                       mean_0,
                       out_img0);
     *out_img = (char*)malloc(out_img0.size());
+    assert((*out_img) != NULL);
     std::memcpy(*out_img, out_img0.data(), out_img0.size() );
     //    std::cout<<__FUNCTION__<<" "<<__LINE__<<" out_img0.size():"<<out_img0.size()<<std::endl;
     *out_img_size = out_img0.size();
@@ -587,6 +601,12 @@ void post_process_float(const std::vector<std::vector<float>>& fpga_out,
   //fpga_out.at(0).size == 1 * 75 * 13 * 13
   //fpga_out.at(1).size == 1 * 75 * 26 * 26
   //element of preds: if prediction.class_label == 0, then no object of this element
+  //---20200410 sunlaoban <down>
+  // in case of memory leak, the function should first check if(*preds != NULL),
+  // then free the previous memory.
+  // so the caller should first call with *preds == NULL,
+  // next call with *preds == previous_pointer_value
+  //---20200410 sunlaoban <up>
   void post_process_for_csharp(//const std::vector<std::vector<char>>& fpga_out,
                                const char *fpga_out,
                                const int *fpga_out_size,
@@ -597,6 +617,9 @@ void post_process_float(const std::vector<std::vector<float>>& fpga_out,
                                int *preds_size
                                ){
 
+    //sun laoban <down>
+    free(*preds);// if *preds == NULL, this will not have any effect.
+    //sun laoban <up>
     std::vector<char> fpga_out_e0(fpga_out, fpga_out + 75*13*13);
     std::vector<char> fpga_out_e1(fpga_out + 75*13*13,
                                   fpga_out + 75*13*13 + 75*26*26);
@@ -616,6 +639,7 @@ void post_process_float(const std::vector<std::vector<float>>& fpga_out,
     //preds0.at(154).right);
 
     *preds = (prediction*)malloc(sizeof(prediction) * preds0.size() );
+    assert((*preds) != NULL);
     //*preds = (prediction*)malloc(100);
     //*preds = new prediction[100];
     //assert(*preds != NULL);

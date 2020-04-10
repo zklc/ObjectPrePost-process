@@ -39,7 +39,7 @@ int main(int agrc, char **argv){
   vector<char> out_img1;
   int out_img1_size;
   int in_img_size = in_img.size();
-  char *out_img1_data;
+  char *out_img1_data = NULL;
   pre_process_image_for_csharp(//const std::vector<unsigned char>& in_img,
                                in_img.data(),
                                //const int *in_img_size,
@@ -65,7 +65,7 @@ int main(int agrc, char **argv){
     fpga_out0[i]=0;
   }
   int fpga_out0_size = fpga_out0.size();
-  prediction *preds_out;
+  prediction *preds_out = NULL;
   int out_preds_size;
   post_process_for_csharp(//const std::vector<std::vector<char>>& fpga_out,
                           //const char *fpga_out,
