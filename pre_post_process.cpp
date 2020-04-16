@@ -39,7 +39,8 @@ void pre_process_image(const std::vector<unsigned char>& in_img,
       for(int c = 0; c < channel; ++c) {
         int addr = h * width * channel + w * channel + c;
         const float in_value = static_cast<float>(in_img.at(addr));
-        float out_value = std::floor(in_value - mean.at(c));
+        //float out_value = std::floor(in_value - mean.at(c));
+        float out_value = std::floor(in_value - 128.0); //fix 128 now
         assert(out_value >= -128.0 && out_value <= 127.0);
         out_img.push_back(static_cast<char>(out_value));//sequence
       }
@@ -48,10 +49,16 @@ void pre_process_image(const std::vector<unsigned char>& in_img,
 
 //conversion the number in int domain to number in float domain
 //Extract information from TensorRT
-void dummy_out_char_to_float(const char *in, float *out, int size){
-  for(int i = 0; i < size; i++){
+  void dummy_out_char_to_float(const char *in, float *out, int size, int blob_index){
+    float scale;
+    if(blob_index == 0) //large
+      scale = 0.18738846480846405;
+    else //medium
+      scale = 0.15913736820220947;
+    for(int i = 0; i < size; i++){
     //TODO: use the scale from TensorRT
-    out[i] = static_cast<float>(in[i] * 127);//dummy
+    //out[i] = static_cast<float>(in[i] * 127);//dummy
+      out[i] = static_cast<float>(in[i] * scale);//dummy
   }
 
 }
@@ -240,7 +247,7 @@ void post_process(const std::vector<std::vector<char>> &fpga_out,
       float *input_data = (float*)malloc(sizeof(float) * 1 * 75 * side_w_ * side_h_);
       assert(input_data != NULL);
       dummy_out_char_to_float(input_data_raw, input_data,
-                              1 * 75 * side_w_ * side_h_);
+                              1 * 75 * side_w_ * side_h_, t);
       // int nw = side_w_*anchors_scale_[t];
       // int nh = side_w_*anchors_scale_[t]; // the source code error
       int nw = side_w_ * anchors_scale_[t];
