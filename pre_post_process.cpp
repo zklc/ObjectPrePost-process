@@ -601,12 +601,36 @@ void post_process_float(const std::vector<std::vector<float>>& fpga_out,
     *out_img_size = out_img0.size();
   }
 
+
+  void translate_cube_to_normal(int width, int height, int channel, int atom_channel,
+                                const char *input, char *output){
+
+    int src_index, dst_index;
+    //transfer position and to float
+    for(int c = 0; c < channel; c++){
+      for(int h = 0; h < height; h++){
+        for(int w = 0; w < width; w++){
+          dst_index = c * height * width
+            + h * width + w;
+          int surface_index = c/atom_channel;
+          src_index = surface_index * (atom_channel * width * height)
+            + h * (atom_channel * width) //offset in ont SURF
+            + w * atom_channel//offset in one line
+            + c % atom_channel;//offset in one atom
+          output[dst_index] = input[src_index];
+
+        }//w
+      }//h
+    }//c
+
+
+  }
   //for gaolaoban
   //post process the results from FPGA
   //Apply nms and do some conversion
-  //fpga_out: 1 * 75 * 13 * 13 + 1 * 75 * 26 * 26
-  //fpga_out.at(0).size == 1 * 75 * 13 * 13
-  //fpga_out.at(1).size == 1 * 75 * 26 * 26
+  //fpga_out: 1 * 96 * 13 * 13 + 1 * 96 * 26 * 26
+  //fpga_out.at(0).size == 1 * 96 * 13 * 13
+  //fpga_out.at(1).size == 1 * 96 * 26 * 26
   //element of preds: if prediction.class_label == 0, then no object of this element
   //---20200410 sunlaoban <down>
   // in case of memory leak, the function should first check if(*preds != NULL),
@@ -614,6 +638,8 @@ void post_process_float(const std::vector<std::vector<float>>& fpga_out,
   // so the caller should first call with *preds == NULL,
   // next call with *preds == previous_pointer_value
   //---20200410 sunlaoban <up>
+  //20200416 change fpga_out size
+  //1 * 96 * 13 *13 * 5 all
   void post_process_for_csharp(//const std::vector<std::vector<char>>& fpga_out,
                                const char *fpga_out,
                                const int *fpga_out_size,
@@ -624,13 +650,27 @@ void post_process_float(const std::vector<std::vector<float>>& fpga_out,
                                int *preds_size
                                ){
 
+    //translate nvdla cube to normal memory <down>
+    char fpga_large[96 * 13 * 13];
+    const char *raw_fpga_large_cube = fpga_out;
+    char fpga_medium[96 * 26 * 26];
+    const char *raw_fpga_medium_cube = fpga_out + 96 * 13 * 13;
+
+    translate_cube_to_normal(13, 13, 96, 32, raw_fpga_large_cube, fpga_large);
+    translate_cube_to_normal(26, 26, 96, 32, raw_fpga_medium_cube, fpga_medium);
+    //translate nvdla cube to normal memory <up>
+
     //sun laoban <down>
     free(*preds);// if *preds == NULL, this will not have any effect.
     //sun laoban <up>
-    std::vector<char> fpga_out_e0(fpga_out, fpga_out + 75*13*13);
-    std::vector<char> fpga_out_e1(fpga_out + 75*13*13,
-                                  fpga_out + 75*13*13 + 75*26*26);
-    //std::cout<<__FUNCTION__<<" "<<__LINE__<<std::endl;
+    // std::vector<char> fpga_out_e0(fpga_out, fpga_out + 75*13*13);
+    // std::vector<char> fpga_out_e1(fpga_out + 75*13*13,
+    //                               fpga_out + 75*13*13 + 75*26*26);
+    std::vector<char> fpga_out_e0(fpga_large, fpga_large + 75*13*13);
+    std::vector<char> fpga_out_e1(fpga_medium,
+                                  fpga_medium + 75*26*26);
+
+    // //std::cout<<__FUNCTION__<<" "<<__LINE__<<std::endl;
 
     std::vector<std::vector<char>> fpga_out0{fpga_out_e0, fpga_out_e1};
 
