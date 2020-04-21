@@ -328,7 +328,8 @@ void post_process(const std::vector<std::vector<char>> &fpga_out,
         }//s < side_w_*side_h_
       }// b < 1
       mask_offset += groups_num_;
-
+      free(swap_data);
+      free(input_data);
     }
 
     delete[] class_score;
